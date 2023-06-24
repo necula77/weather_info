@@ -28,29 +28,29 @@ def get_weather(url, city, auth):
         return print(f"Exception is {type(e)}: {e}")
 
 
-def send_alerts(config, weather):
-
-    for oras, value in weather.items():
-
+def send_alerts(config, weather: dict):
+    for city, v in weather.items():
         notification_alert = []
+        if v["temp_c"] > config["max_temp"]:
+            notification_alert.append(f"Temperatura este f mare: {v['temp_c']}. ")
+        if v["wind_kph"] > config["max_wind_velocity"]:
+            notification_alert.append(f"Viteza vantului este f mare : {v['wind_kph']}. ")
+        if v["pressure_mb"] > config["max_pressure"]:
+            notification_alert.append(f"Presiunea atmosferica este f mare: {v['pressure_mb']}. ")
+        if v["humidity"] > config["max_humidity"]:
+            notification_alert.append(f"Umiditatea este f mare: {v['humidity']}. ")
 
-        if int(value["temp_c"]) > int(config["max_temp"]):
-            notification_alert.append(f"Temperatura este foarte mare in: {value['temp_c']}.")
-        if int(value["wind_kph"]) > int(config["max_wind_velocity"]):
-            notification_alert.append(f"Viteza vantului este foarte mare: {value['wind_kph']}.")
-        if int(value["pressure_mb"]) > int(config["max_pressure"]):
-            notification_alert.append(f"Presiunea atmosferica este foarte mare: {value['pressure_mb']}.")
+        notification_alert.append(f"The weather outside is " + v['condition']['text'] + ". ")
 
-        print(notification_alert)
+        print(f"City: {city}\n" + "\n".join(notification_alert))
 
         if notification_alert:
             notification.notify(
                 title=city,
-                message="".join(notification_alert),
+                message=" ".join(notification_alert),
                 app_icon=None,
                 timeout=10,
             )
-
         time.sleep(5)
 
 
@@ -84,11 +84,9 @@ if __name__ == "__main__":
     config = init_config()
     weather = {}
 
-    while True:
+    cities = cities_read("cities.json")['cities']
 
-        city = input("Introdu orasul despre care vrei sa aflii informatii. Scrie N pentru exit: \n >> ")
-        if city.lower() == "n":
-            break
-        weather[city] = get_weather(config["base_url"],city, auth=config["api_key"])
+    for city in cities:
+        weather[city] = get_weather(config["base_url"], city, auth=config["api_key"])
 
     send_alerts(config, weather)
