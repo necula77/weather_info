@@ -83,17 +83,21 @@ def send_alerts(config, weather: dict, forecast: dict):
     for city, x in forecast.items():
         notification_alert = []
 
-        if over_thresholds["temp_c"] == True:
+        if over_thresholds.get("temp_c", False):
             if x["maxtemp_c"] > config["max_temp"]:
                 notification_alert.append(f"La noapte")
 
-        if over_thresholds["wind_kph"] == True:
-            pass
-        if over_thresholds["pressure_mb"] == True:
-            pass
-        if over_thresholds["humidity"] == True:
-            pass
+        if over_thresholds.get("wind_kph", False):
+            if x["maxwind_kph"] > config["max_wind_velocity"]:
+                notification_alert.append(f"La noapte")
 
+        if over_thresholds.get("pressure_mb", False):
+            if x["maxpressure_mb"] > config["max_pressure"]:
+                notification_alert.append(f"La noapte")
+
+        if over_thresholds.get("humidity", False):
+            if x["maxhumidity"] > config["max_humidity"]:
+                notification_alert.append(f"La noapte")
 
         if notification_alert:
             notification.notify(
@@ -142,4 +146,4 @@ if __name__ == "__main__":
         weather[city] = get_weather(config["base_url"], city, auth=config["api_key"])
         forecast[city] = get_forecast(config["forecast_url"], city, auth=config["api_key"])
 
-    send_alerts(config, weather)
+    send_alerts(config, weather, forecast)
