@@ -54,6 +54,11 @@ def send_alerts(config, weather):
         time.sleep(5)
 
 
+def cities_read(file):
+    with open(file, "r") as f:
+        cities = json.loads(f.read())
+    return cities
+
 
 def init_config():
     try:
