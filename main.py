@@ -134,6 +134,17 @@ def init_config():
         exit()
 
 
+def read_from_txt_file(file, list):
+
+    ip_list = []
+
+    with open(file, "r") as f:
+        for line in file:
+            ip_list.append(line.strip())
+
+    return ip_list
+
+
 if __name__ == "__main__":
     print("Started script here.")
     config = init_config()
