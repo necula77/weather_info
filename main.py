@@ -11,6 +11,13 @@ import json
 from plyer import notification
 
 
+MENU = """
+Selecteaza optiunea dorita:
+\t1. Vremea dupa orase
+\t2. Vremea dupa ip
+"""
+
+
 def get_weather(url, city, auth):
 
     try:
@@ -46,6 +53,24 @@ def get_forecast(url, city, auth):
         return "Request exception: {e}"
     except Exception as e:
         return print(f"Exception is {type(e)}: {e}")
+
+
+def get_ip(url, ip, auth):
+    try:
+        headers = {"key": auth}
+        response = requests.get(url + f"?q={ip}", headers=headers)
+
+        if response.status_code == 200:
+            response_dict = response.json()
+            weather_info = response_dict
+            return weather_info
+        else:
+            return f"Error: {response.text} with code {response.status_code}."
+
+    except requests.exceptions.RequestException as e:
+        return f"Request exception: {e}"
+    except Exception as e:
+        return f"Exception is {type(e)}: {e}"
 
 
 def send_alerts(config, weather: dict, forecast: dict):
@@ -134,12 +159,11 @@ def init_config():
         exit()
 
 
-def read_from_txt_file(file, list):
-
+def read_from_txt_file(file):
     ip_list = []
 
     with open(file, "r") as f:
-        for line in file:
+        for line in f:
             ip_list.append(line.strip())
 
     return ip_list
@@ -147,14 +171,54 @@ def read_from_txt_file(file, list):
 
 if __name__ == "__main__":
     print("Started script here.")
+
     config = init_config()
-    weather = {}
-    forecast = {}
+    print(MENU)
+    command = input(">> ")
 
-    cities = cities_read("cities.json")['cities']
+    match command:
 
-    for city in cities:
-        weather[city] = get_weather(config["base_url"], city, auth=config["api_key"])
-        forecast[city] = get_forecast(config["forecast_url"], city, auth=config["api_key"])
+        case "1":
+            weather = {}
+            forecast = {}
 
-    send_alerts(config, weather, forecast)
+            cities = cities_read("cities.json")['cities']
+
+            for city in cities:
+                weather[city] = get_weather(config["base_url"], city, auth=config["api_key"])
+                forecast[city] = get_forecast(config["forecast_url"], city, auth=config["api_key"])
+
+            send_alerts(config, weather, forecast)
+
+        case "2":
+
+            ip_list = read_from_txt_file("ip_list.txt")
+
+            for ip in ip_list:
+                weather = {}
+                ip_dict = {}
+
+                ip_dict[ip] = get_ip(config["ip_url"], ip, auth=config["api_key"])
+
+                print(f"Response for IP {ip}: {ip_dict[ip]}")
+
+                # if 'country_name' in ip_dict[ip]:
+                #     print(f"Country is: {ip_dict[ip]['country_name']}.")
+                # else:
+                #     print(f"Could not retrieve country name for IP: {ip}")
+                #
+                # print(f"Country is: {ip_dict[ip]['country_name']}.")
+
+                city = ip_dict[ip]['city']
+
+                print(f"The time in {city} is {ip_dict[ip]['localtime']}.")
+
+                weather[city] = get_weather(config["base_url"], city, auth=config["api_key"])
+
+                print(f"""
+                In orasul {city} sunt:
+                 {weather[city]['temp_c']} de grade celsius,
+                 afara este {weather[city]['condition']['text']},
+                 iar vantul bate cu o viteza de {weather[city]['wind_kph']} km/h.
+                 \n\n\n
+                """)
